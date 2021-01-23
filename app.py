@@ -12,12 +12,14 @@ from Cryptodome.Cipher import AES
 import base64
 from hashlib import md5
 
-BLOCK_SIZE = 16
-
 app = Flask(__name__)
 
 CORS(app)
 #coment
+
+
+BLOCK_SIZE = 16
+
 
 def pad(data):
     length = BLOCK_SIZE - (len(data) % BLOCK_SIZE)
@@ -93,11 +95,10 @@ def prediction():
     curl -X POST -v -H "Content-Type: image/png" --data-binary @abba.png http://127.0.0.1:9099/prediction -o foo.jpg
     """
     if request.method == "POST":
-        image = request.data
+        #image = request.data
         imagedata = request.data
         pt = decrypt(imagedata, password)
         image = base64.b64decode(pt)
-
         face_boundries = detect_faces(image)
         print(jsonify({ "faces": face_boundries }))
         return make_response(
@@ -114,4 +115,4 @@ if __name__ == "__main__":
     aligner = AlignCustom()
     extract_feature = FaceFeature(FRGraph)
     face_detect = MTCNNDetect(MTCNNGraph, scale_factor=2); #scale_factor, rescales image for faster detection
-    app.run(host="127.0.0.1", port=5555,ssl_context='adhoc')
+    app.run(host="127.0.0.1", port=8000,ssl_context='adhoc')
