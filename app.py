@@ -7,11 +7,50 @@ from flask import Flask, redirect, url_for, request, Response, jsonify, redirect
 from PIL import Image
 from io import BytesIO
 from flask_cors import CORS
+from Cryptodome import Random
+from Cryptodome.Cipher import AES
+import base64
+from hashlib import md5
+
+BLOCK_SIZE = 16
 
 app = Flask(__name__)
 
 CORS(app)
 #coment
+
+def pad(data):
+    length = BLOCK_SIZE - (len(data) % BLOCK_SIZE)
+    return data + (chr(length)*length).encode()
+
+
+def unpad(data):
+    return data[:-(data[-1] if type(data[-1]) == int else ord(data[-1]))]
+
+
+def bytes_to_key(data, salt, output=48):
+    assert len(salt) == 8, len(salt)
+    data += salt
+    key = md5(data).digest()
+    final_key = key
+    while len(final_key) < output:
+        key = md5(key + data).digest()
+        final_key += key
+    return final_key[:output]
+
+
+def decrypt(encrypted, passphrase):
+    encrypted = base64.b64decode(encrypted)
+    assert encrypted[0:8] == b"Salted__"
+    salt = encrypted[8:16]
+    key_iv = bytes_to_key(passphrase, salt, 32+16)
+    key = key_iv[:32]
+    iv = key_iv[32:]
+    aes = AES.new(key, AES.MODE_CBC, iv)
+    return unpad(aes.decrypt(encrypted[16:]))
+
+password = "8810b866b8be33a1dc60af9a9c584acb".encode()
+
 def detect_faces(img):
 
     img = Image.open(BytesIO(img))
@@ -55,6 +94,10 @@ def prediction():
     """
     if request.method == "POST":
         image = request.data
+        imagedata = request.data
+        pt = decrypt(imagedata, password)
+        image = base64.b64decode(pt)
+
         face_boundries = detect_faces(image)
         print(jsonify({ "faces": face_boundries }))
         return make_response(
@@ -71,4 +114,4 @@ if __name__ == "__main__":
     aligner = AlignCustom()
     extract_feature = FaceFeature(FRGraph)
     face_detect = MTCNNDetect(MTCNNGraph, scale_factor=2); #scale_factor, rescales image for faster detection
-    app.run(host="127.0.0.1", port=5555)
+    app.run(host="127.0.0.1", port=5555,ssl_context='adhoc')
