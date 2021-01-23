@@ -10,4 +10,5 @@ pymongo
 numpy
 flask-cors
 pycryptodomex
+pyopenssl
 
