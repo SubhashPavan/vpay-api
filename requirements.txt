@@ -8,4 +8,6 @@ keras==2.3.1
 boto3
 pymongo
 numpy
+flask-cors
+pycryptodomex
 
