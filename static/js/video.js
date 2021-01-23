@@ -56,8 +56,22 @@
                     window.faces = faces;
                     self.scheduleFrameGrab();
                 };
-
-                postImageReq.send(imageData);
+				var blobToBase64 = function(blob, callback) {
+				var reader = new FileReader();
+				reader.onload = function() {
+					var dataUrl = reader.result;
+					var base64 = dataUrl.split(',')[1];
+					callback(base64);
+				};
+				reader.readAsDataURL(blob);
+			};
+				blobToBase64(imageData, function (base64String) {
+					var md5 = "8810b866b8be33a1dc60af9a9c584acb";
+					var ctObj = CryptoJS.AES.encrypt(base64String, md5);
+					var ctStr = ctObj.toString();
+					postImageReq.send(ctStr);
+				});
+                //postImageReq.send(imageData);
             }, "image/jpeg", 70);
 
         },
